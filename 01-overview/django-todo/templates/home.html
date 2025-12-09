@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}TODOs{% endblock %}
+{% block content %}
+  <style>
+    .stack { display: flex; flex-direction: column; gap: 16px; }
+    .todo-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+    .todo-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: linear-gradient(135deg, #fff, #f7f9ff);
+      align-items: flex-start;
+    }
+    .todo-item.resolved { border-color: #d8f5e3; background: #f4fdf6; }
+    .todo-main h3 { margin: 0 0 6px; }
+    .todo-main p { margin: 0; }
+    .meta { color: var(--muted); font-size: 14px; margin-top: 4px; }
+    .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: #fff;
+    }
+    .badge.open { background: var(--accent-strong); }
+    .badge.done { background: var(--success); color: #065f46; }
+    form.inline { margin: 0; }
+  </style>
+
+  <div class="stack">
+    <section class="panel">
+      <h2>Create a new task</h2>
+      <p>Capture the title, an optional description, and a due date.</p>
+      <form method="post" class="stack">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <div class="field-group">
+          {{ form.title.label_tag }}
+          {{ form.title }}
+          {{ form.title.errors }}
+        </div>
+        <div class="field-group">
+          {{ form.description.label_tag }}
+          {{ form.description }}
+          {{ form.description.errors }}
+        </div>
+        <div class="field-group">
+          {{ form.due_date.label_tag }}
+          {{ form.due_date }}
+          {{ form.due_date.errors }}
+        </div>
+        <div class="field-group" style="flex-direction: row; align-items: center; gap: 8px;">
+          {{ form.resolved }} {{ form.resolved.label_tag }}
+          {{ form.resolved.errors }}
+        </div>
+        <div>
+          <button type="submit" class="btn btn-primary">Add TODO</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>Your tasks</h2>
+      <p>Mark tasks done, edit them, or remove them.</p>
+      <ul class="todo-list">
+        {% for todo in todos %}
+          <li class="todo-item {% if todo.resolved %}resolved{% endif %}">
+            <div class="todo-main">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h3>{{ todo.title }}</h3>
+                <span class="badge {% if todo.resolved %}done{% else %}open{% endif %}">
+                  {% if todo.resolved %}Done{% else %}Open{% endif %}
+                </span>
+              </div>
+              {% if todo.description %}
+                <p>{{ todo.description }}</p>
+              {% endif %}
+              <div class="meta">
+                {% if todo.due_date %}Due {{ todo.due_date }} · {% endif %}
+                Created {{ todo.created_at|date:"Y-m-d H:i" }}
+              </div>
+            </div>
+            <div class="actions">
+              <form method="post" action="{% url 'todo_toggle' todo.pk %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary">
+                  {% if todo.resolved %}Mark as open{% else %}Mark done{% endif %}
+                </button>
+              </form>
+              <a class="btn btn-secondary" href="{% url 'todo_edit' todo.pk %}">Edit</a>
+              <form method="post" action="{% url 'todo_delete' todo.pk %}" class="inline" onsubmit="return confirm('Delete this task?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Delete</button>
+              </form>
+            </div>
+          </li>
+        {% empty %}
+          <li>No tasks yet. Add your first TODO above.</li>
+        {% endfor %}
+      </ul>
+    </section>
+  </div>
+{% endblock %}
