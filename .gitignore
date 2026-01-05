@@ -1,2 +1,9 @@
 .venv/
 *.DS_Store
+node_modules/
+dist/
+*.log
+coverage/
+playwright-report/
+test-results/
+.vite/
